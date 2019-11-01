@@ -1,0 +1,80 @@
+version: "3"
+services:
+  sql-fabulous:
+    image: sql-fabulous
+    build:
+      context: .
+      dockerfile: Dockerfile-mssql
+    ports:
+      - 1433:1433
+    environment: 
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=HelloWorld1
+      - MSSQL_PID=Developer
+  es-test:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.2.4
+    #image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.4
+    #image: docker.elastic.co/elasticsearch/elasticsearch:7.4.1
+    ports:
+      - 9200:9200
+      - 9300:9300
+    environment:
+      - discovery.type=single-node
+  #    - cluster.name=es-cluster
+  #    - bootstrap.memory_lock=true
+  #    - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+  #    - node.name=es-node1
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+  #es-test-2:
+  #  image: docker.elastic.co/elasticsearch/elasticsearch:6.2.4
+  #  ports:
+  #    - 9201:9201
+  #  environment:
+  #    - cluster.name=es-cluster
+  #    - bootstrap.memory_lock=true
+  #    - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+  #    - "discovery.zen.ping.unicast.hosts=es-test"
+  #    - node.name=es-node2
+  #  ulimits:
+  #    memlock:
+  #      soft: -1
+  #      hard: -1
+  kibana-test:
+    image: docker.elastic.co/kibana/kibana:6.2.4
+    ports:
+      - 5601:5601
+    depends_on:
+      - es-test
+  #    - es-test-2
+    environment:
+      - ELASTICSEARCH_URL=http://es-test:9200/
+      - xpack.security.enabled=false
+  cerebro-test:
+    image: yannart/cerebro:latest
+    ports:
+      - 9000:9000
+    depends_on:
+      - es-test
+  #    - es-test-2
+  es-methods:
+    image: es-methods
+    build:
+      context: .
+    ports:
+      - 8888:8888
+    command: "jupyter notebook --ip 0.0.0.0 --no-browser --allow-root --NotebookApp.token=''"
+    depends_on:
+      - sql-fabulous
+    environment:
+
+      - SRCMGMT_DRIVER={ODBC Driver 17 for SQL Server}
+      - SRCMGMT_SERVER=sql-fabulous
+      - SRCMGMT_DATABASE=DS9
+      - SRCMGMT_PORT=1433
+      - SRCMGMT_UID=sa
+      - SRCMGMT_PWD=HelloWorld1
+    volumes:
+      - ./examples:/usr/src/app/local

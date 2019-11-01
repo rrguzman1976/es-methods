@@ -1,0 +1,11 @@
+FROM mcr.microsoft.com/mssql/server:2017-latest-ubuntu
+
+RUN mkdir -p /usr/src/sql
+WORKDIR /usr/src/sql
+
+# Bundle app source
+COPY ./database /usr/src/sql
+RUN chmod ugo+rwx /usr/src/sql/*
+#RUN chmod a+x /usr/src/sql/entrypoint.sh
+
+CMD ["/bin/bash", "./entrypoint.sh"]

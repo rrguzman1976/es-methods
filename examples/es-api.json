@@ -1,0 +1,641 @@
+# Attributes
+# LandGridId: long
+# 1. State: keyword
+# 2. County: keyword
+# 3. Section: keyword
+# 4. Township: keyword
+# 5. Block: keyword
+# 6. Abstract: keyword
+
+# Meridian: keyword, part of township/section
+# Range: keyword, part of township/section
+# Type: keyword
+# location: geo_point
+# location_shape: geo_shape
+
+# Auto-created
+GET /catalog/_mapping
+
+# /index/doc type/doc id
+GET /catalog/_doc/1
+
+# /index/doc type/doc id
+PUT /catalog/_doc/1
+{
+  "sku": "SP000001",
+  "title": "Elasticsearch for Hadoop",
+  "description": "Elasticsearch for Hadoop",
+  "author": "Vishal Shukla",
+  "ISBN": "1785288997",
+  "price": 26.99
+}
+
+# /index/doc type/doc id
+POST /catalog/_doc/2
+{
+  "sku": "SP000002",
+  "title": "Red Meridian",
+  "description": "Red Meridian",
+  "author": "Rick Guzman",
+  "ISBN": "1785288997",
+  "price": 21.99
+}
+
+PUT /catalog/_doc/3
+{
+  "sku": "SP000003",
+  "title": "Google Pixel Phone 32GB - 5 inch display",
+  "description": "Google Pixel Phone 32GB - 5 inch display (Factory Unlocked US Version)",
+  "price": 401.00,
+  "resolution": "1440 x 2560 pixels",
+  "os": "Android 7.1"
+}
+
+# Auto-create id
+# /index/doc type/auto id
+POST /catalog/_doc
+{
+  "sku": "SP000004",
+  "title": "BRed Meridian",
+  "description": "BRed Meridian",
+  "author": "Rick Guzman",
+  "ISBN": "1785288997",
+  "price": 21.99
+}
+
+# Update API
+POST /catalog/_update/5
+{
+  "doc": {
+    "title": "IPhone 2"
+  }
+}
+
+# Upsert
+POST /catalog/_update/6
+{
+  "doc": {
+    "sku": "SP000006",
+    "title": "IPhone 11",
+    "description": "New model",
+    "price": 1201.00,
+    "resolution": "1440 x 2560 pixels",
+    "os": "OS 12"
+  },
+  "doc_as_upsert": true
+}
+
+# Delete
+DELETE /catalog/_doc/6
+
+# Drop Index
+DELETE /landgrid
+
+# Create Index, default type is _doc
+PUT /landgrid
+{
+  "settings": {
+    "number_of_shards": 5,
+    "number_of_replicas": 2,
+    "analysis": {
+      "filter": {
+        "autocomplete_filter": {
+          "type": "edge_ngram",
+          "min_gram": 2,
+          "max_gram": 20
+        }
+      },
+      "analyzer": {
+        "autocomplete": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": [
+            "lowercase",
+            "autocomplete_filter"
+          ]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "_doc": {
+      "properties": {
+        "location": {
+          "type": "geo_point"
+        },
+        "location_shape": {
+          "type": "geo_shape",
+          "strategy": "recursive",
+          "tree": "quadtree",
+          "precision": "1m",
+          "distance_error_pct": 0.025
+        },
+        "LandGridId": {
+          "type": "long",
+          "doc_values": true
+        },
+        "Type": {
+          "type": "text",
+          "fields": {
+            "completion": {
+              "type": "text",
+              "analyzer": "autocomplete",
+              "search_analyzer": "standard"
+            }
+          }
+        },
+        "State": {
+          "type": "text",
+          "fields": {
+            "completion": {
+              "type": "text",
+              "analyzer": "autocomplete",
+              "search_analyzer": "standard"
+            }
+          }
+        },
+        "County": {
+          "type": "text",
+          "fields": {
+            "completion": {
+              "type": "text",
+              "analyzer": "autocomplete",
+              "search_analyzer": "standard"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Run analyzer
+POST landgrid/_analyze
+{
+  "field": "Type",
+  "text": "The Standard Analyzer works this way."
+}
+POST landgrid/_analyze
+{
+  "field": "Type.completion",
+  "text": "The autocomplete Analyzer works this way."
+}
+
+GET /landgrid/_mappings
+
+PUT /landgrid/_doc/1
+{
+  "LandGridId": 1,
+  "State": "TX",
+  "Type": "The Standard Analyzer works this way."
+}
+
+PUT /landgrid/_doc/2
+{
+  "LandGridId": 2,
+  "State": "TX",
+  "Type": "A Standard Analyzer does what?"
+}
+
+PUT /landgrid/_doc/5
+{
+  "LandGridId": 5,
+  "State": "AZ",
+  "Type": "Another range serch!"
+}
+
+GET /landgrid/_doc/2
+
+# Search
+GET /landgrid/_doc/_search?size=1
+
+# Search using standard
+GET /landgrid/_doc/_search
+{
+  "query": {
+    "match": {
+      "Type": "Standard what"
+    }
+  }
+}
+
+# Search using standard, override compound operator
+GET /landgrid/_doc/_search
+{
+  "query": {
+    "match": {
+      "Type": {
+        "query": "Standard what",
+        "operator": "and"
+      }
+    }
+  }
+}
+
+# Search using standard, override min match
+GET /landgrid/_doc/_search
+{
+  "query": {
+    "match": {
+      "Type": {
+        "query": "Standard analyzer range",
+        "operator": "or",
+        "minimum_should_match": 2
+      }
+    }
+  }
+}
+
+# Search using fuzziness, levenshtein
+GET /landgrid/_doc/_search
+{
+  "query": {
+    "match": {
+      "Type": {
+        "query": "search",
+        "fuzziness": 1
+      }
+    }
+  }
+}
+
+# Match a phrase
+GET /landgrid/_doc/_search
+{
+  "query": {
+    "match": {
+      "Type": {
+        "query": "works this way"
+      }
+    }
+  }
+}
+
+# Search using ngram/autocomplete
+GET /landgrid/_doc/_search
+{
+  "query": {
+    "match_phrase": {
+      "query": "Sta"
+    }
+  }
+}
+
+# Search using direct term-level query (exact match, note case)
+GET /landgrid/_doc/_search
+{
+  "query": {
+    "term": {
+      "Type": "standard"
+    }
+  }
+}
+
+# Range query on numeric
+GET /landgrid/_search
+{
+  "query": {
+    "range": {
+      "LandGridId": {
+        "gte": 2,
+        "lte": 4
+      }
+    }
+  }
+}
+
+# Exists (like IS NOT NULL / IS NULL)
+GET /landgrid/_search
+{
+  "query": {
+    "exists": {
+      "field": "LandGridId"
+    }
+  }
+}
+
+# Constant score (no scoring can be more efficient)
+GET /landgrid/_doc/_search
+{
+  "query": {
+    "constant_score": {
+      "filter": {
+        "term": {
+          "Type": "standard"
+        }
+      },
+      "boost": 1.2
+    }
+  }
+}
+
+# Compound query: should (or), filter, must_not
+GET /landgrid/_search
+{
+  "query": {
+    "constant_score": {
+      "filter": {
+        "bool": {
+          "should": [
+            {
+              "exists": {
+                "field": "location"
+              }
+            },
+            {
+              "term": {
+                "Type": "standard"
+              }
+            },
+            {
+              "range": {
+                "LandGridId": {
+                  "gte": 2,
+                  "lte": 4
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+
+# Compound query: must (and), filter, must_not
+GET /landgrid/_search
+{
+  "query": {
+    "constant_score": {
+      "filter": {
+        "bool": {
+          "must": [
+            {
+              "exists": {
+                "field": "LandGridId"
+              }
+            },
+            {
+              "term": {
+                "Type": "standard"
+              }
+            },
+            {
+              "range": {
+                "LandGridId": {
+                  "gte": 1,
+                  "lte": 2
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+
+# Compound query: should (or), must (and), filter, must_not
+GET /landgrid/_search
+{
+  "query": {
+    "constant_score": {
+      "filter": {
+        "bool": {
+          "must": [
+            {
+              "exists": {
+                "field": "LandGridId"
+              }
+            }
+          ],
+          "should": [
+            {
+              "term": {
+                "Type": "standard"
+              }
+            },
+            {
+              "term": {
+                "Type": "range"
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+
+# Compound query: should (or), must (and), filter, must_not
+GET /landgrid/_search
+{
+  "query": {
+    "constant_score": {
+      "filter": {
+        "bool": {
+          "must": [
+            {
+              "exists": {
+                "field": "LandGridId"
+              }
+            }
+          ],
+          "must_not": [
+            {
+              "term": {
+                "Type": "what"
+              }
+            }
+          ],
+          "should": [
+            {
+              "term": {
+                "Type": "standard"
+              }
+            },
+            {
+              "term": {
+                "Type": "range"
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+
+# Aggregations: metric
+GET /landgrid/_search
+{
+  "aggregations": {
+    "unique_counties": {
+      "cardinality": {
+        "field": "County"
+      }
+    }
+  },
+  "query": {
+    "term": {
+      "State": "AZ"
+    }
+  },
+  "size": 0
+}
+
+# Aggregation: bucket (like GROUP BY)
+GET /landgrid/_search
+{
+  "aggregations": {
+    "by_state": {
+      "terms": {
+        "field": "Type",
+        "size": 100
+      }
+    }
+  },
+  "query": {
+    "constant_score": {
+      "filter": {
+        "bool": {
+          "should": [
+            {
+              "term": {
+                "State": "PA"
+              }
+            },
+            {
+              "term": {
+                "State": "OH"
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "size": 0
+}
+
+# Aggregation: bucket (like GROUP BY) + metric
+GET /landgrid/_search
+{
+  "aggregations": {
+    "group_state": {
+      "terms": {
+        "field": "Type",
+        "size": 100,
+        "order": { "unique_states": "desc"}
+      },
+      "aggregations": {
+        "unique_counties": {
+          "cardinality": {
+            "field": "County"
+          }
+        }
+      }
+    }
+  },
+  "query": {
+    "constant_score": {
+      "filter": {
+        "bool": {
+          "should": [
+            {
+              "term": {
+                "State": "PA"
+              }
+            },
+            {
+              "term": {
+                "State": "OH"
+              }
+            },
+            {
+              "term": {
+                "State": "WV"
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "size": 0
+}
+
+# Aggregation: nested
+GET /landgrid/_search
+{
+  "aggregations": {
+    "group_state": {
+      "terms": {
+        "field": "State",
+        "size": 100
+      },
+      "aggregations": {
+        "by_type": {
+          "terms": {
+            "field": "Type",
+            "size": 100,
+            "order": {
+              "unique_counties": "desc"
+            }
+          },
+          "aggregations": {
+            "unique_counties": {
+              "cardinality": {
+                "field": "County"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "query": {
+    "constant_score": {
+      "filter": {
+        "bool": {
+          "should": [
+            {
+              "term": {
+                "State": "PA"
+              }
+            },
+            {
+              "term": {
+                "State": "OH"
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "size": 0
+}
+
+# Aggregation: group by / having
+GET /landgrid/_search
+{
+  "aggregations": {
+      "group_state": {
+          "terms": {
+              "field": "State",
+              "size": 100
+          },
+          "aggregations": {
+              "by_type": {
+                  "filter": {
+                      "term": { 
+                          "Type": "Township"
+                      }
+                  }
+              }
+          }
+      }
+  },
+  "size": 0
+}
