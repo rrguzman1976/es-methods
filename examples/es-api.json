@@ -861,3 +861,28 @@ POST /landgrid/_search
   },
   "size": 0
 }
+
+# Aggregate Totals
+GET /landgrid/_search
+{
+  "aggregations" : {
+    "by_state": {
+      "terms": {
+        "field": "State",
+        "size": 100,
+        "order" : { "_key" : "asc" }
+      }
+    }
+  },
+  "size": 0
+}
+
+GET /landgrid/_search
+{
+  "query": {
+    "match_all": {
+      
+    }
+  }
+  , "size": 1
+}
