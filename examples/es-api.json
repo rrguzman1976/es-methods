@@ -526,7 +526,9 @@ GET /landgrid/_search
       "terms": {
         "field": "Type",
         "size": 100,
-        "order": { "unique_states": "desc"}
+        "order": {
+          "unique_states": "desc"
+        }
       },
       "aggregations": {
         "unique_counties": {
@@ -621,19 +623,239 @@ GET /landgrid/_search
 GET /landgrid/_search
 {
   "aggregations": {
-      "group_state": {
+    "group_state": {
+      "terms": {
+        "field": "State",
+        "size": 100
+      },
+      "aggregations": {
+        "by_type": {
+          "filter": {
+            "term": {
+              "Type": "Township"
+            }
+          }
+        }
+      }
+    }
+  },
+  "size": 0
+}
+
+# Multiple aggregations
+GET /landgrid/_search?size=0
+{
+  "aggregations": {
+    "states": {
+      "filters": {
+        "filters": {
+          "tx": {
+            "match": {
+              "State": "TX"
+            }
+          },
+          "az": {
+            "match": {
+              "State": "AZ"
+            }
+          },
+          "other": {
+            "bool": {
+              "must_not": [
+                {
+                  "match": {
+                    "State": "TX"
+                  }
+                },
+                {
+                  "match": {
+                    "State": "AZ"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Index Templates
+DELETE _template/landgrid_template
+
+GET _template/landgrid_template
+
+POST _template/landgrid_template
+{
+  "index_patterns": [
+    "landgrid*"
+  ],
+  "settings": {
+    "number_of_shards": 7,
+    "number_of_replicas": 2,
+    "analysis": {
+      "filter": {
+        "autocomplete_filter": {
+          "type": "edge_ngram",
+          "min_gram": 2,
+          "max_gram": 20
+        }
+      },
+      "analyzer": {
+        "autocomplete": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": [
+            "lowercase",
+            "autocomplete_filter"
+          ]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "_doc": {
+      "properties": {
+        "location": {
+          "type": "geo_point"
+        },
+        "location_shape": {
+          "type": "geo_shape",
+          "strategy": "recursive",
+          "tree": "quadtree",
+          "precision": "1m",
+          "distance_error_pct": 0.025
+        },
+        "LandGridId": {
+          "type": "long",
+          "doc_values": true
+        },
+        "Type": {
+          "type": "text",
+          "fields": {
+            "completion": {
+              "type": "text",
+              "analyzer": "autocomplete",
+              "search_analyzer": "standard"
+            }
+          }
+        },
+        "State": {
+          "type": "text",
+          "fields": {
+            "completion": {
+              "type": "text",
+              "analyzer": "autocomplete",
+              "search_analyzer": "standard"
+            }
+          }
+        },
+        "County": {
+          "type": "text",
+          "fields": {
+            "completion": {
+              "type": "text",
+              "analyzer": "autocomplete",
+              "search_analyzer": "standard"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Use Template
+PUT /landgrid_2019-11-03/_doc/6
+{
+  "LandGridId": 6,
+  "State": "AZ",
+  "Type": "Another range serch!"
+}
+
+GET /landgrid_2019-11-03
+
+GET /landgrid_2019-11-03/_doc/6
+
+GET /landgrid_2019-11-03/_mappings
+
+# Candidate Query 1:
+GET /landgrid/_search
+{
+  "query": {
+    "constant_score": {
+      "filter": {
+        "bool": {
+          "must_not": [
+            {
+              "exists": {
+                "field": "County"
+              }
+            },
+            {
+              "exists": {
+                "field": "Abstract"
+              }
+            }
+            ],
+            "should": [
+            {
+              "exists": {
+                "field": "LandGridId"
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "aggregations": {
+    "by_state": {
+      "terms": {
+        "field": "State",
+        "size": 100,
+        "order" : { "_key" : "asc" }
+      },
+      "aggregations": {
+        "by_type": {
           "terms": {
-              "field": "State",
-              "size": 100
+            "field": "Type",
+            "size": 100,
+            "order" : { "_key" : "asc" }
+          }
+        }
+      }
+    }
+  },
+  "size": 0
+}
+
+# Canidate Query 2:
+POST /landgrid/_search
+{
+  "aggregations" : {
+      "no county" : {
+          "missing" : { 
+            "field" : "Abstract" 
           },
           "aggregations": {
-              "by_type": {
-                  "filter": {
-                      "term": { 
-                          "Type": "Township"
-                      }
+            "by_state": {
+              "terms": {
+                "field": "State",
+                "size": 100,
+                "order" : { "_key" : "asc" }
+              },
+              "aggregations": {
+                "by_type": {
+                  "terms": {
+                    "field": "Type",
+                    "size": 100,
+                    "order" : { "_key" : "asc" }
                   }
+                }
               }
+            }
           }
       }
   },
