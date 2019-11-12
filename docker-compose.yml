@@ -52,15 +52,17 @@ services:
     environment:
       - ELASTICSEARCH_URL=http://es-test:9200/
       - xpack.security.enabled=false
-  cerebro-test:
-    image: yannart/cerebro:latest
-    ports:
-      - 9000:9000
-    depends_on:
-      - es-test
+  #cerebro-test:
+  #  image: yannart/cerebro:latest
+  #  ports:
+  #    - 9000:9000
+  #  depends_on:
+  #    - es-test
   #    - es-test-2
   es-methods:
     image: es-methods
+    # Link to Consul for service discovery
+    dns: 10.25.8.166
     build:
       context: .
     ports:

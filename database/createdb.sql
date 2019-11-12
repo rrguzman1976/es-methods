@@ -27,6 +27,36 @@ GO
 CREATE SCHEMA [landgriderror]
 GO
 
+IF OBJECT_ID(N'landgrid.State', N'U') IS NOT NULL
+    DROP TABLE [landgrid].[State];
+GO
+
+CREATE TABLE [landgrid].[State] 
+(
+	[StateId] [int] IDENTITY(1,1) PRIMARY KEY,
+	[ObjectId] [int] NOT NULL,
+	[State] [nvarchar](max) NULL,
+	[StateName] [nvarchar](max) NULL,
+	[BoundsGeoShape] [nvarchar](max) NULL,
+	[Geography] [geography] NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+
+IF OBJECT_ID(N'landgriderror.State', N'U') IS NOT NULL
+    DROP TABLE [landgriderror].[State];
+GO
+
+CREATE TABLE [landgriderror].[State] 
+(
+	[StateId] [int] IDENTITY(1,1) PRIMARY KEY,
+	[ObjectId] [int] NOT NULL,
+	[State] [nvarchar](max) NULL,
+	[StateName] [nvarchar](max) NULL,
+	[BoundsGeoShape] [nvarchar](max) NULL,
+	[Geography] [geography] NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+
 IF OBJECT_ID(N'landgrid.County', N'U') IS NOT NULL
     DROP TABLE [landgrid].[County];
 GO
@@ -193,33 +223,99 @@ CREATE TABLE [landgriderror].[PlssTownship]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
 
-IF OBJECT_ID(N'landgrid.State', N'U') IS NOT NULL
-    DROP TABLE [landgrid].[State];
+-- New
+IF OBJECT_ID(N'landgrid.WvDistrict', N'U') IS NOT NULL
+    DROP TABLE [landgrid].[WvDistrict];
 GO
 
-CREATE TABLE [landgrid].[State] 
+CREATE TABLE [landgrid].[WvDistrict] 
 (
-	[StateId] [int] IDENTITY(1,1) PRIMARY KEY,
-	[ObjectId] [int] NOT NULL,
-	[State] [nvarchar](max) NULL,
-	[StateName] [nvarchar](max) NULL,
+	[WvDistrictId]			[int] IDENTITY(1,1) PRIMARY KEY,
+	[ObjectId]				[int] NULL,
+	[StateOverlaps]			[nvarchar](max) NULL,
+	[State]					CHAR(2) NULL,
+	[CountyOverlaps]		[nvarchar](max) NULL,
+	[DistrictId]			INT NULL,
+	[DistrictCode]			VARCHAR(200) NULL,
+	[DistrictLabel]			VARCHAR(200) NULL,
+	[CountyCode]			VARCHAR(200) NULL,
+	[CountyLabel]			VARCHAR(200) NULL,
+	[CountyDistrictLabel]	VARCHAR(200) NULL,
+	[BoundsGeoShape]		[nvarchar](max) NULL,
+	[Geography]				[geography] NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+
+-- New
+IF OBJECT_ID(N'landgriderror.WvDistrict', N'U') IS NOT NULL
+    DROP TABLE [landgriderror].[WvDistrict];
+GO
+
+CREATE TABLE [landgriderror].[WvDistrict] 
+(
+	[WvDistrictId]			[int] IDENTITY(1,1) PRIMARY KEY,
+	[ObjectId]				[int] NULL,
+	[StateOverlaps]			[nvarchar](max) NULL,
+	[State]					CHAR(2) NULL,
+	[CountyOverlaps]		[nvarchar](max) NULL,
+	[DistrictId]			INT NULL,
+	[DistrictCode]			VARCHAR(200) NULL,
+	[DistrictLabel]			VARCHAR(200) NULL,
+	[CountyCode]			VARCHAR(200) NULL,
+	[CountyLabel]			VARCHAR(200) NULL,
+	[CountyDistrictLabel]	VARCHAR(200) NULL,
 	[BoundsGeoShape] [nvarchar](max) NULL,
 	[Geography] [geography] NULL
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
 
-IF OBJECT_ID(N'landgriderror.State', N'U') IS NOT NULL
-    DROP TABLE [landgriderror].[State];
+-- New
+IF OBJECT_ID(N'landgrid.PaTownship', N'U') IS NOT NULL
+    DROP TABLE [landgrid].[PaTownship];
 GO
 
-CREATE TABLE [landgriderror].[State] 
+CREATE TABLE [landgrid].[PaTownship] 
 (
-	[StateId] [int] IDENTITY(1,1) PRIMARY KEY,
-	[ObjectId] [int] NOT NULL,
-	[State] [nvarchar](max) NULL,
-	[StateName] [nvarchar](max) NULL,
-	[BoundsGeoShape] [nvarchar](max) NULL,
-	[Geography] [geography] NULL
+	[PaTownshipId]			[int] IDENTITY(1,1) PRIMARY KEY,
+	[ObjectId]				[int] NULL,
+	[StateOverlaps]			[nvarchar](max) NULL,
+	[State]					CHAR(2) NULL,
+	[CountyOverlaps]		[nvarchar](max) NULL,
+
+	[TownshipCode]			VARCHAR(200) NULL,
+	[TownshipLabel]			VARCHAR(200) NULL,
+	[TownshipClass]			VARCHAR(200) NULL,
+	[CountyCode]			VARCHAR(200) NULL,
+	[CountyLabel]			VARCHAR(200) NULL,
+	[CountyTownshipLabel]	VARCHAR(200) NULL,
+
+	[BoundsGeoShape]		[nvarchar](max) NULL,
+	[Geography]				[geography] NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+
+-- New
+IF OBJECT_ID(N'landgriderror.PaTownship', N'U') IS NOT NULL
+    DROP TABLE [landgriderror].[PaTownship];
+GO
+
+CREATE TABLE [landgriderror].[PaTownship] 
+(
+	[PaTownshipId]			[int] IDENTITY(1,1) PRIMARY KEY,
+	[ObjectId]				[int] NULL,
+	[StateOverlaps]			[nvarchar](max) NULL,
+	[State]					CHAR(2) NULL,
+	[CountyOverlaps]		[nvarchar](max) NULL,
+
+	[TownshipCode]			VARCHAR(200) NULL,
+	[TownshipLabel]			VARCHAR(200) NULL,
+	[TownshipClass]			VARCHAR(200) NULL,
+	[CountyCode]			VARCHAR(200) NULL,
+	[CountyLabel]			VARCHAR(200) NULL,
+	[CountyTownshipLabel]	VARCHAR(200) NULL,
+
+	[BoundsGeoShape]		[nvarchar](max) NULL,
+	[Geography]				[geography] NULL
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
 
@@ -323,7 +419,7 @@ CREATE VIEW [landgrid].[vLandGrid] AS
 	       NULL AS [Abstract],
 	       [BoundsGeoShape]
 	  FROM [landgrid].[State]
-UNION
+UNION ALL
 	SELECT 'State' AS [Type],
 	       1 AS [Error],
 	       [StateId] AS [Id],
@@ -337,7 +433,7 @@ UNION
 	       NULL AS [Abstract],
 	       [BoundsGeoShape]
 	  FROM [landgriderror].[State]
-UNION
+UNION ALL
 	SELECT 'County' AS [Type],
 	       0 AS [Error],
 	       [CountyId] AS [Id],
@@ -351,7 +447,7 @@ UNION
 	       NULL AS [Abstract],
 	       [BoundsGeoShape]
 	  FROM [landgrid].[County]
-UNION
+UNION ALL
 	SELECT 'County' AS [Type],
 	       1 AS [Error],
 	       [CountyId] AS [Id],
@@ -365,7 +461,7 @@ UNION
 	       NULL AS [Abstract],
 	       [BoundsGeoShape]
 	  FROM [landgriderror].[County]
-UNION
+UNION ALL
 	SELECT 'Township' AS [Type],
 	       0 AS [Error],
 	       [PlssTownshipId] AS [Id],
@@ -379,7 +475,7 @@ UNION
 	       NULL AS [Abstract],
 	       [BoundsGeoShape]
 	  FROM [landgrid].[PlssTownship]
-UNION
+UNION ALL
 	SELECT 'Township' AS [Type],
 	       1 AS [Error],
 	       [PlssTownshipId] AS [Id],
@@ -393,7 +489,7 @@ UNION
 	       NULL AS [Abstract],
 	       [BoundsGeoShape]
 	  FROM [landgriderror].[PlssTownship]
-UNION
+UNION ALL
 	SELECT 'Section' AS [Type],
 	       0 AS [Error],
 	       [PlssSectionId] AS [Id],
@@ -407,7 +503,7 @@ UNION
 	       NULL AS [Abstract],
 	       [BoundsGeoShape]
 	  FROM [landgrid].[PlssSection]
-UNION
+UNION ALL
 	SELECT 'Section' AS [Type],
 	       1 AS [Error],
 	       [PlssSectionId] AS [Id],
@@ -421,7 +517,7 @@ UNION
 	       NULL AS [Abstract],
 	       [BoundsGeoShape]
 	  FROM [landgriderror].[PlssSection]
-UNION
+UNION ALL
 	SELECT 'Abstract' AS [Type],
 	       0 AS [Error],
 	       [TexasAbstractId] AS [Id],
@@ -435,7 +531,7 @@ UNION
 	       [Abstract],
 	       [BoundsGeoShape]
 	  FROM [landgrid].[TexasAbstract]
-UNION
+UNION ALL
 	SELECT 'Abstract' AS [Type],
 	       1 AS [Error],
 	       [TexasAbstractId] AS [Id],
@@ -449,7 +545,7 @@ UNION
 	       [Abstract],
 	       [BoundsGeoShape]
 	  FROM [landgriderror].[TexasAbstract]
-UNION
+UNION ALL
 	SELECT 'Block' AS [Type],
 	       0 AS [Error],
 	       [TexasBlockId] AS [Id],
@@ -463,7 +559,7 @@ UNION
 	       NULL AS [Abstract],
 	       [BoundsGeoShape]
 	  FROM [landgrid].[TexasBlock]
-UNION
+UNION ALL
 	SELECT 'Block' AS [Type],
 	       1 AS [Error],
 	       [TexasBlockId] AS [Id],
@@ -477,4 +573,5 @@ UNION
 	       NULL AS [Abstract],
 	       [BoundsGeoShape]
 	  FROM [landgriderror].[TexasBlock]
+;
 GO

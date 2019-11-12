@@ -92,7 +92,8 @@ DELETE /catalog/_doc/6
 DELETE /landgrid
 
 # Create Index, default type is _doc
-PUT /landgrid
+# With alias
+PUT /landgrid_01
 {
   "settings": {
     "number_of_shards": 5,
@@ -116,6 +117,11 @@ PUT /landgrid
         }
       }
     }
+  },
+  "aliases" : {
+        "landgrid" : {
+          
+        }
   },
   "mappings": {
     "_doc": {
